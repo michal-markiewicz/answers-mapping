@@ -72,11 +72,6 @@ function transformAnswerOriginsToAnswerTexts(
           answer,
           texts
         );
-
-        //test
-        if (!mapAnswerOriginToText(answer, texts)) {
-          console.log("cannot find text for ", answer);
-        }
       }
     });
   });
