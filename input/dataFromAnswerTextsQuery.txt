@@ -1,6 +1,6 @@
 [
   { "answer_origin": "3077696", "answer_text": "Men's Tops" },
-  { "answer_origin": "Men's Bottoms", "answer_text": "Men's Bottoms" },
+  { "answer_origin": "3077697", "answer_text": "Men's Bottoms" },
   { "answer_origin": "3077698", "answer_text": "Women's Tops" },
   { "answer_origin": "3077699", "answer_text": "27 inch-29 inch (68-74cm)" },
   { "answer_origin": "3077700", "answer_text": "29 inch-31 inch (74-79cm)" },

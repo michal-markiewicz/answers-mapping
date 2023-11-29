@@ -1,8 +1,24 @@
 type QuestionArray = Question[];
 interface Question {
   answer_selections: AnswerSelections[];
+  trigger_parameters: TriggerParameters;
   locale: string;
   count: string;
+}
+
+interface TriggerParameters {
+  fully_matching: FullyMatchingProduct[];
+}
+
+interface FullyMatchingProduct {
+  product_id: string;
+  checksum: string;
+  collection_id: number;
+  name: string;
+  sku: string;
+  picture: string;
+  offer_url: string;
+  price: number;
 }
 
 interface AnswerSelections {

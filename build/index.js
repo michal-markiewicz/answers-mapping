@@ -60,13 +60,26 @@ function getAnswerOriginsFromSingleQuestion(question) {
             answerOrigins.push(selected_answer.answer_origin);
         });
     });
+    const fullyMatchingProducts = [];
+    question.trigger_parameters.fully_matching.forEach((fullyMatchingProduct) => {
+        fullyMatchingProducts.push(fullyMatchingProduct.name);
+    });
+    answerOrigins.push({
+        recommendations: fullyMatchingProducts,
+    });
     return answerOrigins;
 }
 function transformAnswerOriginsToAnswerTexts(answers, texts) {
     answers.forEach((answersContainer) => {
         answersContainer.forEach((answer) => {
-            const thisAnswerIndex = answersContainer.indexOf(answer);
-            answersContainer[thisAnswerIndex] = mapAnswerOriginToText(answer, texts);
+            if (typeof answer === "number" || typeof answer === "string") {
+                const thisAnswerIndex = answersContainer.indexOf(answer);
+                answersContainer[thisAnswerIndex] = mapAnswerOriginToText(answer, texts);
+                //test
+                if (!mapAnswerOriginToText(answer, texts)) {
+                    console.log("cannot find text for ", answer);
+                }
+            }
         });
     });
     writeDataToFile("output/data.txt", JSON.stringify(answers));
