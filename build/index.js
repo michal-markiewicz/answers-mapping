@@ -34,60 +34,56 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs = __importStar(require("fs"));
 const fsPromises = fs.promises;
-const { answerTexts, questions } = getInputData();
-const answerOrigins = extractAnswerOrigins(questions);
-transformAnswerOriginsToAnswerTexts(answerOrigins, answerTexts);
+const { answerMappings, visits } = getInputData();
+const parsedVisits = parseAllVisits(visits);
+mapAllAnswerOriginsToText(parsedVisits, answerMappings);
 function getInputData() {
-    const dataFromAnswerTextsQuery = fs.readFileSync("input/dataFromAnswerTextsQuery.txt", "utf8");
-    const dataFromQuestionsQuery = fs.readFileSync("input/dataFromQuestionsQuery.txt", "utf8");
+    const dataFromAnswerMappingsQuery = fs.readFileSync("input/dataFromAnswerMappingsQuery.txt", "utf8");
+    const dataFromVisitsQuery = fs.readFileSync("input/dataFromVisitsQuery.txt", "utf8");
     return {
-        answerTexts: JSON.parse(dataFromAnswerTextsQuery),
-        questions: JSON.parse(dataFromQuestionsQuery),
+        answerMappings: JSON.parse(dataFromAnswerMappingsQuery),
+        visits: JSON.parse(dataFromVisitsQuery),
     };
 }
-function extractAnswerOrigins(questions) {
-    const allAnswerOrigins = [];
-    questions.forEach((question) => {
-        const extractedAnswerOrigins = getAnswerOriginsFromSingleQuestion(question);
-        allAnswerOrigins.push(extractedAnswerOrigins);
+function parseAllVisits(visits) {
+    const parsedVisits = [];
+    visits.forEach((visit) => {
+        const parsedVisit = parseSingleVisit(visit);
+        parsedVisits.push(parsedVisit);
     });
-    return allAnswerOrigins;
+    return parsedVisits;
 }
-function getAnswerOriginsFromSingleQuestion(question) {
-    const answerOrigins = [];
-    question.answer_selections.forEach((answer_selections) => {
+function parseSingleVisit(visit) {
+    const parsedVisits = [];
+    visit.answer_selections.forEach((answer_selections) => {
         answer_selections.selected_answers.forEach((selected_answer) => {
-            answerOrigins.push(selected_answer.answer_origin);
+            parsedVisits.push(selected_answer.answer_origin);
         });
     });
     const fullyMatchingProducts = [];
-    question.trigger_parameters.fully_matching.forEach((fullyMatchingProduct) => {
+    visit.trigger_parameters.fully_matching.forEach((fullyMatchingProduct) => {
         fullyMatchingProducts.push(fullyMatchingProduct.name);
     });
-    answerOrigins.push({
+    parsedVisits.push({
         recommendations: fullyMatchingProducts,
     });
-    return answerOrigins;
+    return parsedVisits;
 }
-function transformAnswerOriginsToAnswerTexts(answers, texts) {
-    answers.forEach((answersContainer) => {
+function mapAllAnswerOriginsToText(answersOrigins, answerMappings) {
+    answersOrigins.forEach((answersContainer) => {
         answersContainer.forEach((answer) => {
             if (typeof answer === "number" || typeof answer === "string") {
                 const thisAnswerIndex = answersContainer.indexOf(answer);
-                answersContainer[thisAnswerIndex] = mapAnswerOriginToText(answer, texts);
-                //test
-                if (!mapAnswerOriginToText(answer, texts)) {
-                    console.log("cannot find text for ", answer);
-                }
+                answersContainer[thisAnswerIndex] = mapSingleAnswerOriginToText(answer, answerMappings);
             }
         });
     });
-    writeDataToFile("output/data.txt", JSON.stringify(answers));
+    writeDataToFile("output/data.txt", JSON.stringify(answersOrigins));
 }
-function mapAnswerOriginToText(answerOrigin, answerTexts) {
-    for (let i = 0; i < answerTexts.length; i++) {
-        if (answerTexts[i].answer_origin == answerOrigin) {
-            return answerTexts[i].answer_text;
+function mapSingleAnswerOriginToText(answerOrigin, answerMappings) {
+    for (let i = 0; i < answerMappings.length; i++) {
+        if (answerMappings[i].answer_origin == answerOrigin) {
+            return answerMappings[i].answer_text;
         }
     }
 }

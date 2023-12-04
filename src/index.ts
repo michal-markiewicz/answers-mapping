@@ -1,88 +1,94 @@
 import * as fs from "fs";
 import {
-  AnswerArray,
-  Question,
-  QuestionArray,
-  answersOriginArray,
+  AnswerMappings,
+  Visit,
+  Visits,
+  AnswersOrigins,
 } from "./sql-data-types";
 
 const fsPromises = fs.promises;
 
-const { answerTexts, questions } = getInputData();
-const answerOrigins = extractAnswerOrigins(questions);
-transformAnswerOriginsToAnswerTexts(answerOrigins, answerTexts);
+const { answerMappings, visits } = getInputData();
+const parsedVisits = parseAllVisits(visits);
+mapAllAnswerOriginsToText(parsedVisits, answerMappings);
 
-function getInputData() {
-  const dataFromAnswerTextsQuery = fs.readFileSync(
-    "input/dataFromAnswerTextsQuery.txt",
+function getInputData(): {
+  answerMappings: AnswerMappings;
+  visits: Visits;
+} {
+  const dataFromAnswerMappingsQuery = fs.readFileSync(
+    "input/dataFromAnswerMappingsQuery.txt",
     "utf8"
   );
 
-  const dataFromQuestionsQuery = fs.readFileSync(
-    "input/dataFromQuestionsQuery.txt",
+  const dataFromVisitsQuery = fs.readFileSync(
+    "input/dataFromVisitsQuery.txt",
     "utf8"
   );
 
   return {
-    answerTexts: JSON.parse(dataFromAnswerTextsQuery),
-    questions: JSON.parse(dataFromQuestionsQuery),
+    answerMappings: JSON.parse(dataFromAnswerMappingsQuery),
+    visits: JSON.parse(dataFromVisitsQuery),
   };
 }
 
-function extractAnswerOrigins(questions: QuestionArray) {
-  const allAnswerOrigins = [];
+function parseAllVisits(visits: Visits) {
+  const parsedVisits = [];
 
-  questions.forEach((question: Question) => {
-    const extractedAnswerOrigins = getAnswerOriginsFromSingleQuestion(question);
-    allAnswerOrigins.push(extractedAnswerOrigins);
+  visits.forEach((visit: Visit) => {
+    const parsedVisit = parseSingleVisit(visit);
+    parsedVisits.push(parsedVisit);
   });
 
-  return allAnswerOrigins;
+  return parsedVisits;
 }
 
-function getAnswerOriginsFromSingleQuestion(question: Question) {
-  const answerOrigins = [];
-  question.answer_selections.forEach((answer_selections) => {
+function parseSingleVisit(visit: Visit) {
+  const parsedVisits = [];
+  visit.answer_selections.forEach((answer_selections) => {
     answer_selections.selected_answers.forEach((selected_answer) => {
-      answerOrigins.push(selected_answer.answer_origin);
+      parsedVisits.push(selected_answer.answer_origin);
     });
   });
 
   const fullyMatchingProducts = [];
-  question.trigger_parameters.fully_matching.forEach((fullyMatchingProduct) => {
+  visit.trigger_parameters.fully_matching.forEach((fullyMatchingProduct) => {
     fullyMatchingProducts.push(fullyMatchingProduct.name);
   });
 
-  answerOrigins.push({
+  parsedVisits.push({
     recommendations: fullyMatchingProducts,
   });
 
-  return answerOrigins;
+  return parsedVisits;
 }
 
-function transformAnswerOriginsToAnswerTexts(
-  answers: answersOriginArray | any,
-  texts: AnswerArray
+function mapAllAnswerOriginsToText(
+  answersOrigins: AnswersOrigins | any,
+  answerMappings: AnswerMappings
 ) {
-  answers.forEach((answersContainer) => {
+  answersOrigins.forEach((answersContainer) => {
     answersContainer.forEach((answer) => {
       if (typeof answer === "number" || typeof answer === "string") {
         const thisAnswerIndex = answersContainer.indexOf(answer);
-        answersContainer[thisAnswerIndex] = mapAnswerOriginToText(
+        answersContainer[thisAnswerIndex] = mapSingleAnswerOriginToText(
           answer,
-          texts
+          answerMappings
         );
       }
     });
   });
 
-  writeDataToFile("output/data.txt", JSON.stringify(answers));
+  writeDataToFile("output/data.txt", JSON.stringify(answersOrigins));
 }
 
-function mapAnswerOriginToText(answerOrigin, answerTexts: AnswerArray) {
-  for (let i = 0; i < answerTexts.length; i++) {
-    if (answerTexts[i].answer_origin == answerOrigin) {
-      return answerTexts[i].answer_text;
+function mapSingleAnswerOriginToText(
+  answerOrigin: number | string,
+  answerMappings: AnswerMappings
+) {
+  for (let i = 0; i < answerMappings.length; i++) {
+    if (answerMappings[i].answer_origin == answerOrigin) {
+      return answerMappings[i].answer_text;
     }
   }
 }

@@ -1,5 +1,5 @@
-type QuestionArray = Question[];
-interface Question {
+type Visits = Visit[];
+interface Visit {
   answer_selections: AnswerSelections[];
   trigger_parameters: TriggerParameters;
   locale: string;
@@ -33,20 +33,20 @@ interface SelectedAnswer {
   answer_origin: number;
 }
 
-type AnswerArray = Answer[];
-interface Answer {
+type AnswerMappings = AnswerMapping[];
+interface AnswerMapping {
   answer_origin: string;
   answer_text: string;
 }
 
-type answersOriginArray = number[][];
+type AnswersOrigins = number[][];
 
 export {
-  QuestionArray,
-  Question,
+  Visits,
+  Visit,
   AnswerSelections,
   SelectedAnswer,
-  AnswerArray,
-  Answer,
-  answersOriginArray,
+  AnswerMappings,
+  AnswerMapping,
+  AnswersOrigins,
 };
