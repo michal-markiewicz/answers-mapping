@@ -1,3 +1,4 @@
+import * as XLSX from "xlsx";
 import * as fs from "fs";
 import {
   AnswerMappings,
@@ -10,7 +11,12 @@ const fsPromises = fs.promises;
 
 const { answerMappings, visits } = getInputData();
 const parsedVisits = parseAllVisits(visits);
-mapAllAnswerOriginsToText(parsedVisits, answerMappings);
+const parsedVisitsMappedText = mapAllAnswerOriginsToText(
+  parsedVisits,
+  answerMappings
+);
+const formattedData = formatDataForXLSX(parsedVisitsMappedText);
+outputToXLSX(formattedData);
 
 function getInputData(): {
   answerMappings: AnswerMappings;
@@ -79,7 +85,43 @@ function mapAllAnswerOriginsToText(
     });
   });
 
-  writeDataToFile("output/data.txt", JSON.stringify(answersOrigins));
+  return answersOrigins;
+}
+
+function formatDataForXLSX(parsedVisits: any) {
+  const formattedVisits = [];
+
+  parsedVisits.forEach((parsedVisit) => {
+    const formattedVisit = {
+      answers: "",
+      fully_matching_recommendations: "",
+    };
+
+    parsedVisit.forEach((property) => {
+      if (typeof property == "string") {
+        if (formattedVisit.answers.length > 0) {
+          formattedVisit.answers = `${formattedVisit.answers}, ${property}`;
+        } else {
+          formattedVisit.answers = `${property}`;
+        }
+      } else {
+        if (property.recommendations.length > 0) {
+          formattedVisit.fully_matching_recommendations = `${property.recommendations.map(
+            (recommendation) => {
+              return recommendation;
+            }
+          )}`;
+        } else {
+          formattedVisit.fully_matching_recommendations =
+            "NO FULLY MATCHING RECOMMENDATIONS";
+        }
+      }
+    });
+
+    formattedVisits.push(formattedVisit);
+  });
+
+  return formattedVisits;
 }
 
 function mapSingleAnswerOriginToText(
@@ -91,6 +133,13 @@ function mapSingleAnswerOriginToText(
       return answerMappings[i].answer_text;
     }
   }
+}
+
+function outputToXLSX(formattedVisits) {
+  const worksheet = XLSX.utils.json_to_sheet(formattedVisits);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet");
+  XLSX.writeFile(workbook, "userVisits.xlsx", { compression: true });
 }
 
 async function writeDataToFile(filename, content) {
