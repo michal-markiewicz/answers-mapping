@@ -7,10 +7,11 @@ interface Visit {
 }
 
 interface TriggerParameters {
-  fully_matching: FullyMatchingProduct[];
+  fully_matching: Product[];
+  partially_matching: Product[];
 }
 
-interface FullyMatchingProduct {
+interface Product {
   product_id: string;
   checksum: string;
   collection_id: number;

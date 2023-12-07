@@ -57,13 +57,19 @@ function parseSingleVisit(visit: Visit) {
     });
   });
 
-  const fullyMatchingProducts = [];
+  const recommendations = [];
   visit.trigger_parameters.fully_matching.forEach((fullyMatchingProduct) => {
-    fullyMatchingProducts.push(fullyMatchingProduct.name);
+    recommendations.push(fullyMatchingProduct.name);
   });
 
+  visit.trigger_parameters.partially_matching.forEach(
+    (partiallyMatchingProduct) => {
+      recommendations.push(partiallyMatchingProduct.name);
+    }
+  );
+
   parsedVisits.push({
-    recommendations: fullyMatchingProducts,
+    recommendations,
   });
 
   return parsedVisits;
@@ -94,7 +100,7 @@ function formatDataForXLSX(parsedVisits: any) {
   parsedVisits.forEach((parsedVisit) => {
     const formattedVisit = {
       answers: "",
-      fully_matching_recommendations: "",
+      recommendations: "",
     };
 
     parsedVisit.forEach((property) => {
@@ -106,14 +112,13 @@ function formatDataForXLSX(parsedVisits: any) {
         }
       } else {
         if (property.recommendations.length > 0) {
-          formattedVisit.fully_matching_recommendations = `${property.recommendations.map(
+          formattedVisit.recommendations = `${property.recommendations.map(
             (recommendation) => {
               return recommendation;
             }
           )}`;
         } else {
-          formattedVisit.fully_matching_recommendations =
-            "NO FULLY MATCHING RECOMMENDATIONS";
+          formattedVisit.recommendations = "NO RECOMMENDATIONS";
         }
       }
     });
