@@ -16,7 +16,8 @@ const parsedVisitsMappedText = mapAllAnswerOriginsToText(
   answerMappings
 );
 const formattedData = formatDataForXLSX(parsedVisitsMappedText);
-outputToXLSX(formattedData);
+const countedPaths = countPaths(formattedData);
+outputToXLSX(formattedData, countedPaths);
 
 function getInputData(): {
   answerMappings: AnswerMappings;
@@ -140,11 +141,38 @@ function mapSingleAnswerOriginToText(
   }
 }
 
-function outputToXLSX(formattedVisits) {
-  const worksheet = XLSX.utils.json_to_sheet(formattedVisits);
+function outputToXLSX(formattedVisits, countedVisits) {
   const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet");
+  const worksheet = XLSX.utils.json_to_sheet(formattedVisits);
+  console.log(countedVisits);
+  const worksheet2 = XLSX.utils.json_to_sheet(countedVisits);
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Visits");
+  XLSX.utils.book_append_sheet(workbook, worksheet2, "Count");
   XLSX.writeFile(workbook, "userVisits.xlsx", { compression: true });
+}
+
+function countPaths(formattedVisits) {
+  const countedPaths = {};
+  formattedVisits.forEach(
+    (formattedVisit: { answers: string; recommendations: string }) => {
+      const valueInCountedPaths = countedPaths[formattedVisit.answers];
+
+      if (valueInCountedPaths) {
+        countedPaths[formattedVisit.answers] =
+          countedPaths[formattedVisit.answers] + 1;
+      } else {
+        countedPaths[formattedVisit.answers] = 1;
+      }
+    }
+  );
+
+  const result = Object.keys(countedPaths).map((key) => ({
+    answers: key,
+    count: countedPaths[key],
+  }));
+
+  return result;
 }
 
 async function writeDataToFile(filename, content) {
