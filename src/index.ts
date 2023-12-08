@@ -7,8 +7,6 @@ import {
   AnswersOrigins,
 } from "./sql-data-types";
 
-const fsPromises = fs.promises;
-
 const { answerMappings, visits } = getInputData();
 const parsedVisits = parseAllVisits(visits);
 const parsedVisitsMappedText = mapAllAnswerOriginsToText(
@@ -141,19 +139,9 @@ function mapSingleAnswerOriginToText(
   }
 }
 
-function outputToXLSX(formattedVisits, countedVisits) {
-  const workbook = XLSX.utils.book_new();
-  const worksheet = XLSX.utils.json_to_sheet(formattedVisits);
-  console.log(countedVisits);
-  const worksheet2 = XLSX.utils.json_to_sheet(countedVisits);
-
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Visits");
-  XLSX.utils.book_append_sheet(workbook, worksheet2, "Count");
-  XLSX.writeFile(workbook, "userVisits.xlsx", { compression: true });
-}
-
 function countPaths(formattedVisits) {
   const countedPaths = {};
+
   formattedVisits.forEach(
     (formattedVisit: { answers: string; recommendations: string }) => {
       const valueInCountedPaths = countedPaths[formattedVisit.answers];
@@ -167,19 +155,20 @@ function countPaths(formattedVisits) {
     }
   );
 
-  const result = Object.keys(countedPaths).map((key) => ({
+  const countedPathsFormatted = Object.keys(countedPaths).map((key) => ({
     answers: key,
     count: countedPaths[key],
   }));
 
-  return result;
+  return countedPathsFormatted;
 }
 
-async function writeDataToFile(filename, content) {
-  try {
-    await fsPromises.writeFile(filename, content);
-    console.log("Data written to file");
-  } catch (err) {
-    console.error("An error occurred:", err);
-  }
+function outputToXLSX(formattedVisits, countedVisits) {
+  const workbook = XLSX.utils.book_new();
+  const formattedVisitsSheet = XLSX.utils.json_to_sheet(formattedVisits);
+  const countedVisitsSheet = XLSX.utils.json_to_sheet(countedVisits);
+
+  XLSX.utils.book_append_sheet(workbook, formattedVisitsSheet, "Visits");
+  XLSX.utils.book_append_sheet(workbook, countedVisitsSheet, "Count");
+  XLSX.writeFile(workbook, "userVisits.xlsx", { compression: true });
 }
