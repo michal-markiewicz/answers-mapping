@@ -5,6 +5,7 @@ import {
   Visit,
   Visits,
   AnswersOrigins,
+  AnswerMapping,
 } from "./sql-data-types";
 
 const { answerMappings, visits } = getInputData();
@@ -18,8 +19,8 @@ const countedPaths = countPaths(formattedData);
 outputToXLSX(formattedData, countedPaths);
 
 function getInputData(): {
-  answerMappings: AnswerMappings;
-  visits: Visits;
+  answerMappings: { [key: string]: AnswerMapping[] };
+  visits: { [key: string]: Visit[] };
 } {
   const dataFromAnswerMappingsQuery = fs.readFileSync(
     "input/dataFromAnswerMappingsQuery.txt",
@@ -31,16 +32,31 @@ function getInputData(): {
     "utf8"
   );
 
+  const visitsDataFixed = fixVisitsInputDataFormatting(dataFromVisitsQuery);
+
   return {
     answerMappings: JSON.parse(dataFromAnswerMappingsQuery),
-    visits: JSON.parse(dataFromVisitsQuery),
+    visits: JSON.parse(visitsDataFixed),
   };
 }
 
-function parseAllVisits(visits: Visits) {
-  const parsedVisits = [];
+function fixVisitsInputDataFormatting(visitsInputData: string) {
+  const visitsFixedInputData = visitsInputData
+    .replace(/"\{/g, `{`) // replace "{ with {
+    .replace(/\}"/g, `}`) // replace }" with }
+    .replace(/"\[/g, `[`) // replace "[ with [
+    .replace(/\]"/g, `]`) // replace ]" with ]
+    .replace(/\\"/g, `"`); // replace \" with "
 
-  visits.forEach((visit: Visit) => {
+  return visitsFixedInputData;
+}
+
+function parseAllVisits(visits: { [key: string]: Visit[] }) {
+  const parsedVisits = [];
+  const visitsKey = Object.keys(visits)[0];
+  const visitsArr = visits[visitsKey] as Visit[];
+
+  visitsArr.forEach((visit: Visit) => {
     const parsedVisit = parseSingleVisit(visit);
     parsedVisits.push(parsedVisit);
   });
@@ -76,7 +92,7 @@ function parseSingleVisit(visit: Visit) {
 
 function mapAllAnswerOriginsToText(
   answersOrigins: AnswersOrigins | any,
-  answerMappings: AnswerMappings
+  answerMappings: { [key: string]: AnswerMapping[] }
 ) {
   answersOrigins.forEach((answersContainer) => {
     answersContainer.forEach((answer) => {
@@ -130,11 +146,14 @@ function formatDataForXLSX(parsedVisits: any) {
 
 function mapSingleAnswerOriginToText(
   answerOrigin: number | string,
-  answerMappings: AnswerMappings
+  answerMappings: { [key: string]: AnswerMapping[] }
 ) {
-  for (let i = 0; i < answerMappings.length; i++) {
-    if (answerMappings[i].answer_origin == answerOrigin) {
-      return answerMappings[i].answer_text;
+  const mappingsKey = Object.keys(answerMappings)[0];
+  const mappingsArr = answerMappings[mappingsKey] as AnswerMapping[];
+
+  for (let i = 0; i < mappingsArr.length; i++) {
+    if (mappingsArr[i].answer_origin == answerOrigin) {
+      return mappingsArr[i].answer_text;
     }
   }
 }
