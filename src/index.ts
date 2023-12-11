@@ -23,12 +23,12 @@ function getInputData(): {
   visits: { [key: string]: Visit[] };
 } {
   const dataFromAnswerMappingsQuery = fs.readFileSync(
-    "input/dataFromAnswerMappingsQuery.txt",
+    "input/dataFromAnswerMappingsQuery.json",
     "utf8"
   );
 
   const dataFromVisitsQuery = fs.readFileSync(
-    "input/dataFromVisitsQuery.txt",
+    "input/dataFromVisitsQuery.json",
     "utf8"
   );
 
@@ -190,4 +190,5 @@ function outputToXLSX(formattedVisits, countedVisits) {
   XLSX.utils.book_append_sheet(workbook, formattedVisitsSheet, "Visits");
   XLSX.utils.book_append_sheet(workbook, countedVisitsSheet, "Count");
   XLSX.writeFile(workbook, "userVisits.xlsx", { compression: true });
+  console.log("Data written to a file!");
 }
