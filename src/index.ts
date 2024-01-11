@@ -1,19 +1,10 @@
 import * as XLSX from "xlsx";
 import * as fs from "fs";
-import {
-  AnswerMappings,
-  Visit,
-  Visits,
-  AnswersOrigins,
-  AnswerMapping,
-} from "./sql-data-types";
+import { AnswerMappings, Visit, Visits, AnswersOrigins, AnswerMapping } from "./sql-data-types";
 
 const { answerMappings, visits } = getInputData();
 const parsedVisits = parseAllVisits(visits);
-const parsedVisitsMappedText = mapAllAnswerOriginsToText(
-  parsedVisits,
-  answerMappings
-);
+const parsedVisitsMappedText = mapAllAnswerOriginsToText(parsedVisits, answerMappings);
 const formattedData = formatDataForXLSX(parsedVisitsMappedText);
 const countedPaths = countPaths(formattedData);
 outputToXLSX(formattedData, countedPaths);
@@ -22,15 +13,9 @@ function getInputData(): {
   answerMappings: { [key: string]: AnswerMapping[] };
   visits: { [key: string]: Visit[] };
 } {
-  const dataFromAnswerMappingsQuery = fs.readFileSync(
-    "input/dataFromAnswerMappingsQuery.json",
-    "utf8"
-  );
+  const dataFromAnswerMappingsQuery = fs.readFileSync("input/dataFromAnswerMappingsQuery.json", "utf8");
 
-  const dataFromVisitsQuery = fs.readFileSync(
-    "input/dataFromVisitsQuery.json",
-    "utf8"
-  );
+  const dataFromVisitsQuery = fs.readFileSync("input/dataFromVisitsQuery.json", "utf8");
 
   const visitsDataFixed = fixVisitsInputDataFormatting(dataFromVisitsQuery);
 
@@ -77,11 +62,9 @@ function parseSingleVisit(visit: Visit) {
     recommendations.push(fullyMatchingProduct.name);
   });
 
-  visit.trigger_parameters.partially_matching.forEach(
-    (partiallyMatchingProduct) => {
-      recommendations.push(partiallyMatchingProduct.name);
-    }
-  );
+  visit.trigger_parameters.partially_matching.forEach((partiallyMatchingProduct) => {
+    recommendations.push(partiallyMatchingProduct.name);
+  });
 
   parsedVisits.push({
     recommendations,
@@ -98,10 +81,14 @@ function mapAllAnswerOriginsToText(
     answersContainer.forEach((answer) => {
       if (typeof answer === "number" || typeof answer === "string") {
         const thisAnswerIndex = answersContainer.indexOf(answer);
-        answersContainer[thisAnswerIndex] = mapSingleAnswerOriginToText(
-          answer,
-          answerMappings
-        );
+        const mappedAnswer = mapSingleAnswerOriginToText(answer, answerMappings);
+
+        if (typeof mappedAnswer === "undefined") {
+          answersContainer[thisAnswerIndex] = `NO_MAPPING(${answer})`;
+          console.warn(`Couldn't map ${answer}`);
+        } else {
+          answersContainer[thisAnswerIndex] = mapSingleAnswerOriginToText(answer, answerMappings);
+        }
       }
     });
   });
@@ -127,11 +114,9 @@ function formatDataForXLSX(parsedVisits: any) {
         }
       } else {
         if (property.recommendations.length > 0) {
-          formattedVisit.recommendations = `${property.recommendations.map(
-            (recommendation) => {
-              return recommendation;
-            }
-          )}`;
+          formattedVisit.recommendations = `${property.recommendations.map((recommendation) => {
+            return recommendation;
+          })}`;
         } else {
           formattedVisit.recommendations = "NO RECOMMENDATIONS";
         }
@@ -161,18 +146,15 @@ function mapSingleAnswerOriginToText(
 function countPaths(formattedVisits) {
   const countedPaths = {};
 
-  formattedVisits.forEach(
-    (formattedVisit: { answers: string; recommendations: string }) => {
-      const valueInCountedPaths = countedPaths[formattedVisit.answers];
+  formattedVisits.forEach((formattedVisit: { answers: string; recommendations: string }) => {
+    const valueInCountedPaths = countedPaths[formattedVisit.answers];
 
-      if (valueInCountedPaths) {
-        countedPaths[formattedVisit.answers] =
-          countedPaths[formattedVisit.answers] + 1;
-      } else {
-        countedPaths[formattedVisit.answers] = 1;
-      }
+    if (valueInCountedPaths) {
+      countedPaths[formattedVisit.answers] = countedPaths[formattedVisit.answers] + 1;
+    } else {
+      countedPaths[formattedVisit.answers] = 1;
     }
-  );
+  });
 
   const countedPathsFormatted = Object.keys(countedPaths).map((key) => ({
     answers: key,
