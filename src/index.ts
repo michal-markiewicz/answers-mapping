@@ -53,6 +53,7 @@ function parseSingleVisit(visit: Visit) {
   const parsedVisits = [];
   visit.answer_selections.forEach((answer_selections) => {
     answer_selections.selected_answers.forEach((selected_answer) => {
+      console.log(selected_answer);
       parsedVisits.push(selected_answer.answer_origin);
     });
   });
