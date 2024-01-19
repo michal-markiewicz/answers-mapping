@@ -18,7 +18,7 @@ function getInputData(): {
   const dataFromVisitsQuery = fs.readFileSync("input/dataFromVisitsQuery.json", "utf8");
 
   const visitsDataFixed = fixVisitsInputDataFormatting(dataFromVisitsQuery);
-
+  fs.writeFileSync("jsonDebugging.json", visitsDataFixed);
   return {
     answerMappings: JSON.parse(dataFromAnswerMappingsQuery),
     visits: JSON.parse(visitsDataFixed),
