@@ -31,7 +31,9 @@ function fixVisitsInputDataFormatting(visitsInputData: string) {
     .replace(/\}"/g, `}`) // replace }" with }
     .replace(/"\[/g, `[`) // replace "[ with [
     .replace(/\]"/g, `]`) // replace ]" with ]
-    .replace(/\\"/g, `"`); // replace \" with "
+    .replace(/\\"/g, `"`) // replace \" with "
+    .replace(/\\\"/g, ``) // replace \\" with nothing
+    .replace(/\\/g, ``); // replace \ with nothing
 
   return visitsFixedInputData;
 }
