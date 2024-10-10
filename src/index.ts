@@ -1,6 +1,6 @@
-import * as XLSX from "xlsx";
 import * as fs from "fs";
-import { AnswerMappings, Visit, Visits, AnswersOrigins, AnswerMapping } from "./sql-data-types";
+import * as XLSX from "xlsx";
+import { AnswerMapping, AnswersOrigins, Visit } from "./sql-data-types";
 
 const { answerMappings, visits } = getInputData();
 const parsedVisits = parseAllVisits(visits);
@@ -14,10 +14,9 @@ function getInputData(): {
   visits: { [key: string]: Visit[] };
 } {
   const dataFromAnswerMappingsQuery = fs.readFileSync("input/dataFromAnswerMappingsQuery.json", "utf8");
-
   const dataFromVisitsQuery = fs.readFileSync("input/dataFromVisitsQuery.json", "utf8");
-
   const visitsDataFixed = fixVisitsInputDataFormatting(dataFromVisitsQuery);
+
   fs.writeFileSync("jsonDebugging.json", visitsDataFixed);
   return {
     answerMappings: JSON.parse(dataFromAnswerMappingsQuery),
@@ -55,8 +54,17 @@ function parseSingleVisit(visit: Visit) {
   const parsedVisits = [];
   visit.answer_selections.forEach((answer_selections) => {
     answer_selections.selected_answers.forEach((selected_answer) => {
-      console.log(selected_answer);
-      parsedVisits.push(selected_answer.answer_origin);
+      const isSliderQuestion = selected_answer?.low_value;
+
+      if (isSliderQuestion) {
+        parsedVisits.push({
+          low_value: selected_answer?.low_value,
+          high_value: selected_answer?.high_value,
+          isSlider: true,
+        });
+      } else {
+        parsedVisits.push(selected_answer.answer_origin);
+      }
     });
   });
 
@@ -76,10 +84,7 @@ function parseSingleVisit(visit: Visit) {
   return parsedVisits;
 }
 
-function mapAllAnswerOriginsToText(
-  answersOrigins: AnswersOrigins | any,
-  answerMappings: { [key: string]: AnswerMapping[] }
-) {
+function mapAllAnswerOriginsToText(answersOrigins: AnswersOrigins | any, answerMappings: { [key: string]: AnswerMapping[] }) {
   answersOrigins.forEach((answersContainer) => {
     answersContainer.forEach((answer) => {
       if (typeof answer === "number" || typeof answer === "string") {
@@ -109,11 +114,23 @@ function formatDataForXLSX(parsedVisits: any) {
     };
 
     parsedVisit.forEach((property) => {
+      console.log("prop", property);
+      if (!property) {
+        formattedVisit.recommendations = "error";
+        formattedVisit.answers = "error";
+        return;
+      }
       if (typeof property == "string") {
         if (formattedVisit.answers.length > 0) {
           formattedVisit.answers = `${formattedVisit.answers}, ${property}`;
         } else {
           formattedVisit.answers = `${property}`;
+        }
+      } else if (property.isSlider) {
+        if (formattedVisit.answers.length > 0) {
+          formattedVisit.answers = `${formattedVisit.answers}, SLIDER(${property.low_value}, ${property.high_value})`;
+        } else {
+          formattedVisit.answers = `SLIDER(${property.low_value}, ${property.high_value})`;
         }
       } else {
         if (property.recommendations.length > 0) {
@@ -132,10 +149,7 @@ function formatDataForXLSX(parsedVisits: any) {
   return formattedVisits;
 }
 
-function mapSingleAnswerOriginToText(
-  answerOrigin: number | string,
-  answerMappings: { [key: string]: AnswerMapping[] }
-) {
+function mapSingleAnswerOriginToText(answerOrigin: number | string, answerMappings: { [key: string]: AnswerMapping[] }) {
   const mappingsKey = Object.keys(answerMappings)[0];
   const mappingsArr = answerMappings[mappingsKey] as AnswerMapping[];
 

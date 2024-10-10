@@ -32,6 +32,8 @@ interface AnswerSelections {
 interface SelectedAnswer {
   answer_id: number;
   answer_origin: number;
+  low_value?: number;
+  high_value?: number;
 }
 
 type AnswerMappings = AnswerMapping[];
@@ -42,12 +44,4 @@ interface AnswerMapping {
 
 type AnswersOrigins = number[][];
 
-export {
-  Visits,
-  Visit,
-  AnswerSelections,
-  SelectedAnswer,
-  AnswerMappings,
-  AnswerMapping,
-  AnswersOrigins,
-};
+export { AnswerMapping, AnswerMappings, AnswerSelections, AnswersOrigins, SelectedAnswer, Visit, Visits };
